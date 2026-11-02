@@ -1,3 +1,5 @@
+#!/usr/bin/env node --experimental-strip-types
+
 import * as lsp from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import * as parser from "./parser"
@@ -45,7 +47,7 @@ const getConfiguration = async (uri: string): Promise<any> => {
 }
 
 const isGitattributesFile = (textDocument: TextDocument) =>
-    textDocument.uri.endsWith(`.gitattributes`) || textDocument.languageId === "gitattributes"
+    textDocument.uri.endsWith(`.gitattributes`) || /^git[-_]?attributes$/.test(textDocument.languageId)
 
 const check = (textDocument: TextDocument) => {
     if (!isGitattributesFile(textDocument)) {

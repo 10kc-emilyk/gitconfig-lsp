@@ -91,6 +91,7 @@ const generateGitDocumentation = async () => {
 
     {
         const dom = new jsdom.JSDOM(await fetch("https://git-scm.com/docs/git-config").then((res) => res.text()))
+        preprocessDocument(dom.window.document)
         let result: GitconfigDocumentation = {}
         for (const dl of querySelector(dom.window.document.body, "#_variables")!.parentElement!.querySelectorAll<HTMLDivElement>(":scope > div.dlist > dl")) {
             result = { ...result, ...parseDl(dl) }
@@ -140,16 +141,30 @@ export type GitattributesDocumentation = { title: string, documentation: string 
 
 const generateGitattributesDocumentation = async () => {
     const dom = new jsdom.JSDOM(await fetch("https://git-scm.com/docs/gitattributes").then((res) => res.text()))
+    preprocessDocument(dom.window.document)
     const result: GitattributesDocumentation = []
     for (const section of dom.window.document.querySelectorAll(".sect3")) {
         if (section.children[0].tagName !== "H4") { throw new Error("parse error: " + section.children[0].innerHTML) }
-        if (section.children[0].children[1]?.tagName === "CODE") {
-            result.push({ title: section.children[0].children[1].textContent!, documentation: new TurndownService({ headingStyle: "setext" }).turndown([...section.children].slice(1).map((e) => e.innerHTML).join("")) })
-        } else {
+        const code = section.children[0].querySelector('code');
+        if (code) {
+            result.push({ title: code.textContent!, documentation: new TurndownService({ headingStyle: "setext" }).turndown([...section.children].slice(1).map((e) => e.innerHTML).join("")) })
+        } else if (result.length) {
             result[result.length - 1].documentation += "\n\n" + new TurndownService({ headingStyle: "setext" }).turndown(section.innerHTML)
+        } else {
+            console.warn('Unexpected preceding text when parsing gitattributes', section.children[0].outerHTML)
         }
     }
     fs.writeFileSync(path.join(__dirname, "git/Documentation/gitattributes.json"), JSON.stringify(result, null, "    "))
+}
+
+const preprocessDocument = (doc: HTMLDocument) => {
+    doc.querySelectorAll<HTMLSpanElement>('span.synopsis').forEach((s) => {
+        if ([...s.children].every((c) => c.tagName=== 'CODE')) {
+            const r = doc.createElement('code');
+            r.textContent = s.textContent;
+            s.replaceWith(r)
+        }
+    })
 }
 
 generateGitDocumentation().catch(console.error)

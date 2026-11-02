@@ -1,3 +1,5 @@
+#!/usr/bin/env node --experimental-strip-types
+
 import * as lsp from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import * as parser from "./parser"
@@ -51,8 +53,7 @@ conn.onInitialize((params) => {
 })
 
 const isGitConfigFile = (textDocument: TextDocument) =>
-    textDocument.uri.endsWith(`.git/config`) || textDocument.languageId === "gitconfig"
-
+    textDocument.uri.endsWith(`.git/config`) || /^git[-_]?config$/.test(textDocument.languageId)
 const check = (textDocument: TextDocument) => {
     if (!isGitConfigFile(textDocument)) {
         conn.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] })

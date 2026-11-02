@@ -5,6 +5,10 @@
   "publisher": "yy0931",
   "description": "",
   "main": "./dist/extension.js",
+  "bin": {
+    "gitconfig-lsp": "./dist/gitconfig/server.js",
+    "gitattributes-lsp": "./dist/gitattributes/server.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/yy0931/gitconfig-lsp"
